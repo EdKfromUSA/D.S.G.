@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Explorer: Principles for a Prolonged Life</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Serif:ital@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application uses a three-part interactive dashboard structure. A filterable navigation list on the left allows users to easily find and select principles. The central panel provides a focused, detailed view of the selected principle's text and scriptural source. The right panel offers context through a dynamic thematic chart and a list of related principles. This structure was chosen to transform the dense textual report into an exploratory experience. It breaks down information into digestible chunks, prevents cognitive overload, and encourages non-linear discovery by revealing thematic connections between concepts, thus enhancing user understanding and engagement far more effectively than a linear page. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Hierarchical categories of principles. Goal: Organize. Method: Interactive Filter Buttons. Interaction: Click to filter the main list. Justification: Provides immediate high-level sorting for the user. Library: Vanilla JS.
+        - Report Info: Detailed description of each principle. Goal: Inform. Method: Formatted Text Block. Interaction: Dynamically updated on selection. Justification: Clear, focused presentation of core content. Library: Vanilla JS.
+        - Report Info: Implicit themes within each principle (e.g., social vs. personal focus). Goal: Compare & Analyze. Method: Polar Area Chart. Interaction: Dynamically updates to show the thematic DNA of the selected principle. Justification: Offers a quick, visual "at-a-glance" analysis that is difficult to glean from text alone. Library: Chart.js (Canvas).
+        - Report Info: Shared concepts between principles. Goal: Relationships. Method: Dynamically generated list of "Related Principles." Interaction: Clickable links to navigate to related items. Justification: Encourages deeper exploration and helps users build a mental map of the interconnected concepts. Library: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfcfb;
+            color: #44403c;
+        }
+        h1, h2, h3 {
+            font-family: 'Noto Serif', serif;
+        }
+        .active-nav-item {
+            background-color: #fde68a;
+            color: #92400e;
+            border-left-color: #d97706;
+        }
+        .nav-item:hover {
+            background-color: #fef3c7;
+        }
+        .filter-btn-active {
+            background-color: #a3e635;
+            color: #3f6212;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        .filter-btn {
+             background-color: #f1f5f9;
+             color: #475569;
+        }
+        .filter-btn:hover {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold tracking-tight text-stone-800 sm:text-5xl">The Divine Blueprint for Enduring Existence</h1>
+            <p class="mt-4 text-lg leading-8 text-stone-600">An interactive explorer of 25 principles for prolonging life from Jewish tradition.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            
+            <aside class="lg:col-span-1">
+                <div class="sticky top-8">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4">Explore Principles</h3>
+                    <div id="filter-container" class="flex flex-wrap gap-2 mb-4"></div>
+                    <nav id="principles-nav" class="mt-4 h-[60vh] overflow-y-auto pr-2 border-r border-stone-200">
+                        <ul id="principles-list" class="space-y-1"></ul>
+                    </nav>
+                </div>
+            </aside>
+
+            <div id="content-area" class="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <article id="principle-details" class="md:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                </article>
+
+                <div id="contextual-insights" class="md:col-span-1 space-y-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800 mb-2">Thematic DNA</h3>
+                        <p class="text-sm text-stone-600 mb-4">Visualizing the core focus of the selected principle.</p>
+                        <div class="relative w-full h-72 max-h-[300px] mx-auto max-w-xs">
+                             <canvas id="themesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                        <h3 class="text-xl font-bold text-stone-800 mb-3">Related Principles</h3>
+                        <ul id="related-principles-list" class="space-y-3"></ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const principlesData = [
+            { id: 1, title: "Honoring Parents", hebrewTitle: "Kibud Av v'Eim", category: "Torah Promise", description: "This is a cornerstone of Jewish ethics, requiring profound respect and care for one's parents. It is unique in its explicit promise of longevity, reflecting a societal mechanism for continuity. A society that values its elders fosters stability, which is conducive to individual and collective 'long life.'", quote: "Honor your father and your mother, that your days may be prolonged in the land which the LORD your God gives you.", source: "Exodus 20:12", themes: { spiritual: 2, ethical: 5, communal: 5, personal: 1 } },
+            { id: 2, title: "Sending Away the Mother Bird", hebrewTitle: "Shiluach HaKen", category: "Torah Promise", description: "This mitzvah, which carries the same promise of longevity as honoring parents, teaches a profound lesson about character development. It represents the ability to act for the sake of Heaven, even when it is difficult, cultivating a balanced character that can express both compassion and disciplined action.", quote: "...you should send the mother bird away and take the young for yourself - in order that it will be good for you and that you will have a long life.", source: "Deuteronomy 22:7", themes: { spiritual: 5, ethical: 3, communal: 0, personal: 2 } },
+            { id: 3, title: "Honest Weights and Measures", hebrewTitle: "Even Sh'lema", category: "Torah Promise", description: "The imperative for absolute honesty in all commercial dealings is explicitly linked to prolonged existence. A society built on integrity fosters trust and prevents exploitation, creating a stable, harmonious environment where individuals and the nation can thrive and endure.", quote: "You must have completely honest weights and completely honest measures if you are to endure long on the soil that your God gives you.", source: "Deuteronomy 25:15", themes: { spiritual: 2, ethical: 5, communal: 4, personal: 1 } },
+            { id: 4, title: "General Observance of Commandments", hebrewTitle: "Shmirat HaMitzvot", category: "Torah Promise", description: "The overarching principle that adherence to all of God's statutes leads to a blessed and prolonged existence. This implies a holistic divine economy where spiritual adherence underpins physical and communal well-being, framing longevity as a natural outcome of a well-ordered life.", quote: "So you shall keep His statutes and His commandments... that you may live long on the land which the LORD your God is giving you for all time.", source: "Deuteronomy 4:40", themes: { spiritual: 5, ethical: 4, communal: 4, personal: 3 } },
+            { id: 5, title: "Torah Study", hebrewTitle: "Talmud Torah", category: "Life in This World", description: "The continuous engagement with Torah is seen as a 'Tree of Life.' This lifelong process of intellectual and spiritual engagement not only enhances wisdom but also actively exercises cognitive faculties, contributing to a life that is long in years and rich in understanding.", quote: "For length of days and long life And peace they add to you.", source: "Proverbs 3:2", themes: { spiritual: 5, ethical: 1, communal: 1, personal: 4 } },
+            { id: 6, title: "Acts of Loving-Kindness", hebrewTitle: "Gemilut Chasadim", category: "Life in This World", description: "These are acts of benevolence performed without expectation of return. They build social capital and strengthen communal bonds, creating a reciprocal network of support that directly contributes to an individual's well-being, resilience, and overall quality of life.", quote: "The reward for service is in this world.", source: "Talmud, Shabbat 127a", themes: { spiritual: 2, ethical: 4, communal: 5, personal: 2 } },
+            { id: 7, title: "Charity and Justice", hebrewTitle: "Tzedakah", category: "Life in This World", description: "Understood as an act of justice, not just benevolence, Tzedakah is the obligation to aid the needy. By pursuing economic justice and ensuring the basic needs of all members, a society reduces social strife and creates the stable conditions necessary for the health and longevity of the entire populace.", quote: "You shall surely open your hand to the poor and the destitute of your land.", source: "Deuteronomy 15:11", themes: { spiritual: 1, ethical: 5, communal: 5, personal: 0 } },
+            { id: 8, title: "Respect for Elders", hebrewTitle: "Hidur Pnei Zaken", category: "Life in This World", description: "Honoring the elderly is a societal imperative that recognizes their accumulated wisdom. A society that values and integrates its elders benefits from their guidance, leading to greater stability and the preservation of traditions that promote overall well-being and communal endurance.", quote: "You shall rise before the aged and show deference to the old.", source: "Leviticus 19:32", themes: { spiritual: 1, ethical: 4, communal: 5, personal: 1 } },
+            { id: 9, title: "Choosing Life", hebrewTitle: "L'Chaim", category: "Life in This World", description: "This is a meta-commandment to actively 'choose life' in all decisions. It transforms daily actions—from health to relationships to finances—into opportunities for promoting well-being. Longevity is not just a passive gift but an active pursuit, realized through a multitude of daily, ethical choices.", quote: "I have put before you life and death, blessing and curse — therefore choose life!", source: "Deuteronomy 30:19", themes: { spiritual: 3, ethical: 4, communal: 2, personal: 5 } },
+            { id: 10, title: "Sanctity of Human Life", hebrewTitle: "Pikuach Nefesh", category: "Life in This World", description: "This principle asserts that preserving human life is of infinite value, overriding almost all other religious laws. It elevates life preservation to the highest ethical priority, encouraging proactive measures for health and safety and fostering a communal responsibility for the well-being of all.", quote: "Whosoever preserves a single soul...scripture ascribes merit to him as though he had preserved a complete world.", source: "Talmud, Sanhedrin 37a", themes: { spiritual: 3, ethical: 5, communal: 4, personal: 3 } },
+            { id: 11, title: "Fear of God", hebrewTitle: "Yirat Shamayim", category: "Life in This World", description: "This is a profound, reverential awe for the Divine that motivates ethical living. It acts as a meta-virtue, preventing self-destructive behaviors by fostering a deep respect for divine will, which in turn promotes safety, well-being, and a prolonged existence.", quote: "...that thou mightest fear the LORD thy God... and that thy days may be prolonged.", source: "Deuteronomy 6:2", themes: { spiritual: 5, ethical: 3, communal: 0, personal: 3 } },
+            { id: 12, title: "Wisdom and Understanding", hebrewTitle: "Chochmah u'Binah", category: "Life in This World", description: "Wisdom is not merely knowledge but practical discernment that guides life choices towards safety and well-being. A wise person makes informed decisions, avoids unnecessary risks, and learns from experience, naturally prolonging life by steering away from destructive paths.", quote: "Long life is in her right hand; in her left hand are riches and honor.", source: "Proverbs 3:16", themes: { spiritual: 2, ethical: 2, communal: 1, personal: 5 } },
+            { id: 13, title: "Cultivating Peace", hebrewTitle: "Rodef Shalom", category: "Life in This World", description: "The active pursuit of peace (shalom), understood as wholeness and harmony, is a prerequisite for a stable environment. Conflict is inherently destructive; cultivating peace reduces stress and fosters support networks, directly contributing to better health and a longer, more secure existence.", quote: "Seek peace and pursue it.", source: "Psalm 34:15", themes: { spiritual: 2, ethical: 3, communal: 5, personal: 3 } },
+            { id: 14, title: "Maintaining Health", hebrewTitle: "Shmirat HaGuf", category: "Life in This World", description: "Caring for one's body is a religious imperative, as the body is a vessel for divine service. This transforms health practices like diet and exercise into spiritual acts, ensuring one has the physical capacity to live a full, purposeful, and sustained life.", quote: "Guard yourself and guard your soul very carefully.", source: "Deuteronomy 4:9", themes: { spiritual: 2, ethical: 1, communal: 0, personal: 5 } },
+            { id: 15, title: "Avoiding Evil Speech", hebrewTitle: "Lashon Hara", category: "Life in This World", description: "The prohibition against negative speech, even if true, is explicitly linked to a desire for life. Harmful speech erodes trust and creates discord, which is detrimental to mental health and communal stability. A respectful society is a nurturing environment where life can thrive.", quote: "Who is the man who is eager for life... Guard your tongue from evil.", source: "Psalm 34:13-14", themes: { spiritual: 2, ethical: 5, communal: 4, personal: 1 } },
+            { id: 16, title: "Observing Shabbat", hebrewTitle: "Shmirat Shabbat", category: "Life in This World", description: "The weekly Sabbath provides a divinely mandated rhythm of rest and spiritual recalibration. This consistent rest prevents burnout, reduces stress, and allows for physical and mental recovery, promoting a healthier, more balanced lifestyle conducive to long-term vitality.", quote: "Remember the Sabbath day, to keep it holy.", source: "Exodus 20:8", themes: { spiritual: 5, ethical: 0, communal: 2, personal: 4 } },
+            { id: 17, title: "Upholding Justice", hebrewTitle: "Mishpat Tzedek", category: "Virtue", description: "The active pursuit of justice is a prerequisite for societal endurance. A society that upholds justice minimizes internal conflict and ensures stability. This creates an environment where individuals are more secure, healthier, and thus more likely to live a long life in a thriving land.", quote: "Justice, justice shall you pursue, that you may thrive...", source: "Deuteronomy 16:20", themes: { spiritual: 1, ethical: 5, communal: 5, personal: 0 } },
+            { id: 18, title: "Trust in God", hebrewTitle: "Bitachon", category: "Virtue", description: "Deep and unwavering faith in God's providence reduces anxiety and fosters a sense of security. This trust frees one from chronic stress and worry, which are known to harm physical health. This mental and emotional resilience directly supports a more stable, enduring life.", quote: "Trust in the LORD with all your heart... And He makes all your paths straight.", source: "Proverbs 3:5-6", themes: { spiritual: 5, ethical: 0, communal: 0, personal: 4 } },
+            { id: 19, title: "Humility", hebrewTitle: "Anavah", category: "Virtue", description: "Humility fosters harmonious relationships by reducing destructive conflicts that arise from ego. A humble individual is more open to learning and collaboration, creating a supportive and less conflict-ridden social environment that is conducive to a longer, healthier, and more integrated life.", quote: "The effect of humility is fear of the LORD, Wealth, honor, and life.", source: "Proverbs 22:4", themes: { spiritual: 3, ethical: 2, communal: 3, personal: 3 } },
+            { id: 20, title: "Discipline & Self-Control", hebrewTitle: "Gevurah", category: "Virtue", description: "Self-discipline is the ability to restrain desires and make choices for long-term benefit. A disciplined person is more likely to adhere to healthy habits and avoid addictive or reckless behaviors, directly reducing health risks and creating a more secure life path.", quote: "...he who rules his spirit than he who takes a city.", source: "Proverbs 16:32", themes: { spiritual: 2, ethical: 1, communal: 0, personal: 5 } },
+            { id: 21, title: "Avoiding Anger", hebrewTitle: "Slanut", category: "Virtue", description: "The imperative to control anger is crucial, as it is seen as spiritually and socially destructive. Anger damages relationships and leads to harmful actions. Overcoming it cultivates inner peace and healthier relationships, creating an environment conducive to sustained well-being.", quote: "Do not be easy to anger.", source: "Avot 2:10", themes: { spiritual: 2, ethical: 3, communal: 2, personal: 4 } },
+            { id: 22, title: "Truthfulness", hebrewTitle: "Emet", category: "Virtue", description: "Truth is foundational for trust and stability in all relationships and a functional society. Lies and deceit erode trust, leading to conflict. A society where truth is upheld fosters reliable interactions and strong communal bonds, allowing its members to thrive in security.", quote: "Keep away from lies.", source: "Exodus 23:7", themes: { spiritual: 2, ethical: 5, communal: 4, personal: 1 } },
+            { id: 23, title: "Patience", hebrewTitle: "Savlanut", category: "Virtue", description: "Patience is the ability to endure difficulties and maintain composure. It is crucial for mental resilience, enabling one to navigate life's challenges with thoughtful decisions rather than impulsive ones. This emotional stability reduces stress and prevents self-sabotaging behavior.", quote: "Better a patient spirit than a haughty spirit.", source: "Ecclesiastes 7:8", themes: { spiritual: 2, ethical: 1, communal: 1, personal: 4 } },
+            { id: 24, title: "Cultivating Joy", hebrewTitle: "Simcha", category: "Virtue", description: "The active embrace of joy is a vital component of a fulfilling life. A joyful disposition has documented physiological benefits and enhances one's quality of life. By cultivating joy, individuals create conditions conducive to a longer, more vibrant, and purposeful existence.", quote: "Serve G-d with joy, come before Him with song.", source: "Psalms 100:2", themes: { spiritual: 4, ethical: 0, communal: 3, personal: 4 } },
+            { id: 25, title: "Upholding the Covenant", hebrewTitle: "Brit", category: "Virtue", description: "Commitment to the sacred agreement between God and the Jewish people provides a framework for collective identity, purpose, and continuity. This ensures the enduring existence of the people, a form of 'long life' that extends beyond individual mortality to the entire nation.", quote: "I will walk among you and be your God, and you will be My people.", source: "Leviticus 26:12", themes: { spiritual: 5, ethical: 2, communal: 5, personal: 1 } },
+        ];
+
+        let activePrincipleId = 1;
+        let themesChartInstance = null;
+        
+        const principleDetailsEl = document.getElementById('principle-details');
+        const principlesListEl = document.getElementById('principles-list');
+        const filterContainerEl = document.getElementById('filter-container');
+        const relatedListEl = document.getElementById('related-principles-list');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
+            renderPrincipleList('All');
+            updateDisplay(activePrincipleId);
+        });
+
+        function setupFilters() {
+            const categories = ['All', 'Torah Promise', 'Life in This World', 'Virtue'];
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = category;
+                button.className = `filter-btn text-sm font-medium py-1 px-3 rounded-full transition-colors duration-200`;
+                if (category === 'All') {
+                    button.classList.add('filter-btn-active');
+                }
+                button.onclick = () => {
+                    renderPrincipleList(category);
+                    document.querySelectorAll('#filter-container button').forEach(btn => btn.classList.remove('filter-btn-active'));
+                    button.classList.add('filter-btn-active');
+                };
+                filterContainerEl.appendChild(button);
+            });
+        }
+        
+        function renderPrincipleList(filter = 'All') {
+            principlesListEl.innerHTML = '';
+            const filteredData = filter === 'All' ? principlesData : principlesData.filter(p => p.category === filter);
+            
+            filteredData.forEach(principle => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" id="nav-item-${principle.id}" class="nav-item block border-l-4 border-transparent py-2 px-3 transition-colors duration-200">
+                        <p class="font-semibold text-stone-700">${principle.title}</p>
+                        <p class="text-sm text-stone-500">${principle.hebrewTitle}</p>
+                    </a>
+                `;
+                li.onclick = (e) => {
+                    e.preventDefault();
+                    updateDisplay(principle.id);
+                };
+                principlesListEl.appendChild(li);
+            });
+            updateActiveNavItem(activePrincipleId);
+        }
+
+        function updateDisplay(id) {
+            activePrincipleId = id;
+            const principle = principlesData.find(p => p.id === id);
+            if (!principle) return;
+
+            principleDetailsEl.innerHTML = `
+                <div class="mb-4">
+                    <span class="inline-block bg-amber-100 text-amber-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${principle.category}</span>
+                </div>
+                <h2 class="text-3xl font-bold text-stone-900">${principle.title}</h2>
+                <p class="text-lg text-stone-600 font-semibold mb-6">${principle.hebrewTitle}</p>
+                <p class="text-base text-stone-700 leading-relaxed mb-6">${principle.description}</p>
+                <blockquote class="border-l-4 border-amber-500 pl-4 italic text-stone-600">
+                    <p>"${principle.quote}"</p>
+                    <cite class="block text-right mt-2 not-italic text-sm font-semibold text-stone-800">${principle.source}</cite>
+                </blockquote>
+            `;
+            
+            updateActiveNavItem(id);
+            updateChart(principle.themes);
+            updateRelatedPrinciples(principle.id, principle.themes);
+        }
+
+        function updateActiveNavItem(id) {
+            document.querySelectorAll('#principles-list a').forEach(el => {
+                el.classList.remove('active-nav-item');
+            });
+            const activeEl = document.getElementById(`nav-item-${id}`);
+            if (activeEl) {
+                activeEl.classList.add('active-nav-item');
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function updateChart(themes) {
+            const ctx = document.getElementById('themesChart').getContext('2d');
+            const data = {
+                labels: ['Spiritual Focus', 'Ethical Conduct', 'Communal Harmony', 'Personal Well-being'],
+                datasets: [{
+                    label: 'Thematic DNA',
+                    data: [themes.spiritual, themes.ethical, themes.communal, themes.personal],
+                    backgroundColor: 'rgba(251, 191, 36, 0.4)',
+                    borderColor: 'rgba(217, 119, 6, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(217, 119, 6, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(217, 119, 6, 1)'
+                }]
+            };
+
+            if (themesChartInstance) {
+                themesChartInstance.destroy();
+            }
+
+            themesChartInstance = new Chart(ctx, {
+                type: 'polarArea',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#44403c'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                stepSize: 1,
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        label += context.parsed.r
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRelatedPrinciples(currentId, currentThemes) {
+            const getSimilarity = (themes1, themes2) => {
+                const v1 = Object.values(themes1);
+                const v2 = Object.values(themes2);
+                let diff = 0;
+                for (let i = 0; i < v1.length; i++) {
+                    diff += Math.abs(v1[i] - v2[i]);
+                }
+                return diff;
+            };
+
+            const related = principlesData
+                .filter(p => p.id !== currentId)
+                .map(p => ({
+                    ...p,
+                    similarity: getSimilarity(currentThemes, p.themes)
+                }))
+                .sort((a, b) => a.similarity - b.similarity)
+                .slice(0, 3);
+            
+            relatedListEl.innerHTML = '';
+            related.forEach(principle => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" class="block p-3 rounded-lg transition-colors duration-200 hover:bg-stone-100">
+                        <p class="font-semibold text-stone-700">${principle.title}</p>
+                        <p class="text-sm text-stone-500">${principle.hebrewTitle}</p>
+                    </a>
+                `;
+                li.onclick = (e) => {
+                    e.preventDefault();
+                    updateDisplay(principle.id);
+                };
+                relatedListEl.appendChild(li);
+            });
+        }
+
+    </script>
+</body>
+</html>
